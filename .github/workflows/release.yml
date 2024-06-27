@@ -16,29 +16,14 @@ jobs:
           node-version: 18
       - name: Install Dependencies
         run: yarn --frozen-lockfile
-      - name: build
+      - name: Build
         run: yarn build
       - name: Release to Github and NPM
         uses: cycjimmy/semantic-release-action@v4.1.0
         with:
           branches: |
             [
-              '+([0-9])?(.{+([0-9]),x}).x',
-              'main',
-              'next',
-              'next-major',
-              {
-                name: 'hotfix',
-                prerelease: true
-              },
-              {
-                name: 'beta',
-                prerelease: true
-              },
-              {
-                name: 'alpha',
-                prerelease: true
-              }
+              'main'
             ]
 
         env:

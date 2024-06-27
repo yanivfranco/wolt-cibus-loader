@@ -1,0 +1,19 @@
+name: PR Title Linter
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - main
+
+jobs:
+  linter:
+    name: Pull Request title check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Semantic Release PR Title Check
+        uses: osl-incubator/semantic-release-pr-title-check@v1.4.1
+        with: #Optional
+          convention-name: conventionalcommits #Default: angular
