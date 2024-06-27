@@ -99,6 +99,14 @@ new WoltCibusLoader(config: WoltCibusLoaderConfig)
 | puppeteerLaunchOptions | [PuppeteerLaunchOptions](https://pptr.dev/api/puppeteer.puppeteerlaunchoptions)                                                                     | undefined | Puppeteer launch options to be passed to the puppeteer.launch function                                                                                                                                                                                                                        |
 | testRun                | boolean                                                                                                                                             | false     | If true, the flow will be executed without actually submitting the order, it will only log the submitted details                                                                                                                                                                              |
 
+### Methods
+
+```ts
+loadRemainingCibusBalanceToWolt(): Promise<string>
+```
+
+- Main method to load the remaining cibus balance to wolt.
+
 # License
 
 The MIT License
