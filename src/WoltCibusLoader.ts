@@ -340,6 +340,10 @@ export class WoltCibusLoader {
    * Get the current balance from the cibus website using the cibus scraper.
    */
   async getCibusBalance() {
+    if (!this.config.cibusScraperOptions) {
+      throw new Error("Cibus scraper options are required if the balance is not provided in the config.");
+    }
+
     const cibusScraper = new CibusScraper();
     const { balance } = await cibusScraper.scrap(this.config.cibusScraperOptions);
 
