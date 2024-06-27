@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "noImplicitAny": true,
+    "lib": ["es6", "dom", "es2021"],
+    "removeComments": true,
+    "skipLibCheck": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*", "tests"],
+  "exclude": ["node_modules/**/*", "dist/**/*", "lib/**/*", "node_modules"]
+}
