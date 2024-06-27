@@ -1,25 +1,22 @@
 {
-  "name": "wolt-client",
-  "description": "A simple client for Wolt API",
+  "name": "wolt-cibus-loader",
+  "description": "Simple automation tool to load extra Cibus credits to your Wolt account",
   "version": "1.0.0",
   "author": "yanivfranco@gmail.com",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "packageManager": "yarn@1.22.17",
-  "homepage": "https://github.com/yanivfranco/wolt-client",
+  "homepage": "https://github.com/yanivfranco/wolt-cibus-loader",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "jest"
   },
   "dependencies": {
     "@google-cloud/local-auth": "2.1.0",
-    "@types/node-telegram-bot-api": "^0.64.7",
     "cibus-scraper": "^1.0.3",
     "googleapis": "105",
-    "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
-    "node-telegram-bot-api": "^0.66.0",
     "pdf2json": "^3.1.3",
     "pino": "^9.1.0",
     "pino-pretty": "^11.0.0",
