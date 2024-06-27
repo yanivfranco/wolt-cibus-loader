@@ -2,7 +2,7 @@
 
 This project is here to help you and load your cibus extra credits to wolt.
 
-After I lost few hundered shekels due to expiery of cibus credits, I decided to autotmate the process (which is cumbersome and painfull, regardless), and save my food money.
+After I lost few thousands shekels due to expiery of cibus credits, I decided to autotmate the process (which is cumbersome and painfull, regardless), and save my food money.
 
 # Prerequisites
 
