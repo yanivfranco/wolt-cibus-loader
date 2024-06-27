@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "CommonJS",
     "noImplicitAny": true,
     "lib": ["es6", "dom", "es2021"],
     "removeComments": true,
