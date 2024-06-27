@@ -8,21 +8,10 @@ export interface WoltCibusLoaderConfig {
   woltEmail: string;
 
   /**
-   * Whether the closest gift card price should be higher than the cibus balance.
-   * This is useful if you have a credit card assosiated to your cibus account, and you want to avoid remaining balance in Cibus.
+   * Options for the cibus scraper in order to get current balance and login to the cibus website
+   * Either the cibusScraperOptions or the balanceToLoad should be provided.
    */
-  shouldPassBalance?: boolean;
-
-  /**
-   * Whether the code should be retrieved from the gift card mail and redeemed automatically.
-   * If not provided, the code will be redeemed automatically.
-   */
-  shouldReedemCode?: boolean;
-
-  /**
-   * Function that returns the magic link from the login email received.
-   */
-  getWoltLoginMagicLink?: () => Promise<string> | string;
+  cibusScraperOptions?: CibusScraperOptions;
 
   /**
    * Cibus balance to load to Wolt.
@@ -31,9 +20,22 @@ export interface WoltCibusLoaderConfig {
   balanceToLoad?: number;
 
   /**
-   * Options for the cibus scraper in order to get current balance and login to the cibus website
+   * Whether the closest gift card price should be higher than the cibus balance.
+   * This is useful if you have a credit card assosiated to your cibus account, and you want to avoid remaining balance in Cibus.
    */
-  cibusScraperOptions?: CibusScraperOptions;
+  shouldPassBalance?: boolean;
+
+  /**
+   * Whether the code should be retrieved from the gift card mail and redeemed automatically.
+   * default: true
+   */
+  shouldReedemCode?: boolean;
+
+  /**
+   * Function that returns the magic link from the login email received.
+   * default: () => Promise<string> | string
+   */
+  getWoltLoginMagicLink?: () => Promise<string> | string;
 
   /**
    * Puppeteer launch options to be passed to the puppeteer.launch function

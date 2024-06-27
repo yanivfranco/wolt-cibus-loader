@@ -70,8 +70,8 @@ export class WoltCibusLoader {
       }
 
       return orderNumber;
-    } catch (error) {
-      logger.error({ error }, "Error while logging in to Wolt");
+    } catch (error: any) {
+      logger.error({ error: error?.message, stack: error?.stack }, "Error occurred during the flow.");
       throw error;
     } finally {
       await browser.close();
