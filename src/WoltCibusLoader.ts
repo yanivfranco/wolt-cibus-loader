@@ -10,7 +10,7 @@ import { logger } from "./logger";
 import { WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
-  gmailClient = new GmailClient();
+  gmailClient: GmailClient = new GmailClient();
 
   constructor(private config: WoltCibusLoaderConfig) {
     puppeteer.use(pluginStealth());
@@ -19,7 +19,8 @@ export class WoltCibusLoader {
   async loadRemainingCibusBalanceToWolt() {
     logger.info("Flow started");
     logger.info("Getting current cibus balance");
-    const cibusBalance = this.config.balanceToLoad ?? (await this.getCibusBalance());
+    const cibusBalance =
+      this.config.balanceToLoad !== undefined ? this.config.balanceToLoad : await this.getCibusBalance();
     if (cibusBalance <= 0) {
       throw new Error("Cibus balance is 0, nothing to load to Wolt.");
     }
@@ -70,8 +71,9 @@ export class WoltCibusLoader {
       }
 
       return orderNumber;
-    } catch (error: any) {
-      logger.error({ error: error?.message, stack: error?.stack }, "Error occurred during the flow.");
+    } catch (error: unknown | Error) {
+      const typedError = error as Error;
+      logger.error({ error: typedError?.message, stack: typedError?.stack }, "Error occurred during the flow.");
       throw error;
     } finally {
       await browser.close();
@@ -130,6 +132,7 @@ export class WoltCibusLoader {
     const orderNumber = url.split("/").pop();
     return orderNumber;
   }
+
   /**
    * Adds the gift card to the cart and proceeds to the payment.
    */
@@ -309,7 +312,7 @@ export class WoltCibusLoader {
    */
   private async getGiftCardElementClosestToBalance(page: Page, balance: number) {
     const giftCardElements = await page.$$(getTestIdSelector("horizontal-item-card-price"));
-    const shouldPassBalance = this.config.shouldPassBalance;
+    const shouldPassBalance = this.config.shouldPassBalance !== undefined ? this.config.shouldPassBalance : false;
     let closestElement: { element: ElementHandle<Element>; absDiff: number; price: number } | null = null;
 
     for (const element of giftCardElements) {

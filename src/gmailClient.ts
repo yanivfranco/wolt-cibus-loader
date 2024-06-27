@@ -24,7 +24,6 @@ export class GmailClient {
   private gmail: gmail_v1.Gmail;
 
   private initialized = false;
-  constructor() {}
 
   async init() {
     await this.authorize();
@@ -55,7 +54,7 @@ export class GmailClient {
    * @return {Promise<void>}
    */
   async saveCredentials(client: OAuth2Client) {
-    const content: any = await fs.readFile(CREDENTIALS_PATH);
+    const content = await fs.readFile(CREDENTIALS_PATH, "utf8");
     const keys = JSON.parse(content);
     const key = keys.installed || keys.web;
     const payload = JSON.stringify({

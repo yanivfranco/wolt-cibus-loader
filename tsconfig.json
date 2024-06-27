@@ -12,6 +12,6 @@
     "moduleResolution": "node",
     "outDir": "./dist"
   },
-  "include": ["src/**/*", "tests"],
+  "include": ["src/**/*", "tests", ".eslintrc.json"],
   "exclude": ["node_modules/**/*", "dist/**/*", "lib/**/*", "node_modules"]
 }

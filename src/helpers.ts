@@ -36,6 +36,7 @@ export async function doWithRetries<T>(fn: () => Promise<T>, errorMessage?: stri
       logger.warn({ error: error.message, errorMessage }, "Error while executing function, retrying...");
       retriesLeft--;
       if (retriesLeft > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-loop-func
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
