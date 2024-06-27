@@ -62,7 +62,7 @@ import { WoltCibusLoader } from "wolt-cibus-loader";
       `Successfully loaded remaining Cibus balance to Wolt. Order confirmation number: ${orderConfirmationNumber}`
     );
   } catch (e: any) {
-    console.error(`initialization failed for the following reason: ${e.message}`);
+    console.error(`Error loading remaining Cibus balance to Wolt: ${e.message}`);
   }
 })();
 ```
@@ -88,16 +88,16 @@ new WoltCibusLoader(config: WoltCibusLoaderConfig)
 
 #### WoltCibusLoaderConfig
 
-| Name                   | Type                           | Default   | Description                                                                                                      |
-| ---------------------- | ------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| woltEmail              | string (required)              | -         | Wolt user email                                                                                                  |
-| cibusScraperOptions    | CibusScraperOptions (optional) | undefined | Options for the cibus scraper in order to get current balance and login to the cibus website                     |
-| balanceToLoad          | number (optional)              | undefined | Cibus balance to load to Wolt. If not provided, the balance will be fetched from the cibus website               |
-| shouldPassBalance      | boolean (optional)             | false     | Whether the closest gift card price should be higher than the cibus balance                                      |
-| shouldReedemCode       | boolean (optional)             | true      | Whether the code should be retrieved from the gift card mail and redeemed automatically                          |
-| getWoltLoginMagicLink  | function (optional)            | undefined | Function that returns the magic link from the login email received                                               |
-| puppeteerLaunchOptions | PuppeteerLaunchOptions         | undefined | Puppeteer launch options to be passed to the puppeteer.launch function                                           |
-| testRun                | boolean                        | false     | If true, the flow will be executed without actually submitting the order, it will only log the submitted details |
+| Name                   | Type                                                                                                                                                | Default   | Description                                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| woltEmail              | string (required)                                                                                                                                   | -         | Wolt user email                                                                                                  |
+| cibusScraperOptions    | [CibusScraperOptions](https://github.com/yanivfranco/cibus-scraper/blob/cbde9fe6c0395894f382d62579b93a24338e84a4/src/cibusScraper.ts#L4) (optional) | undefined | Options for the cibus scraper in order to get current balance and login to the cibus website                     |
+| balanceToLoad          | number (optional)                                                                                                                                   | undefined | Cibus balance to load to Wolt. If not provided, the balance will be fetched from the cibus website               |
+| shouldPassBalance      | boolean (optional)                                                                                                                                  | false     | Whether the closest gift card price should be higher than the cibus balance                                      |
+| shouldReedemCode       | boolean (optional)                                                                                                                                  | true      | Whether the code should be retrieved from the gift card mail and redeemed automatically                          |
+| getWoltLoginMagicLink  | function (optional)                                                                                                                                 | undefined | Function that returns the magic link from the login email received                                               |
+| puppeteerLaunchOptions | [PuppeteerLaunchOptions](https://pptr.dev/api/puppeteer.puppeteerlaunchoptions)                                                                     | undefined | Puppeteer launch options to be passed to the puppeteer.launch function                                           |
+| testRun                | boolean                                                                                                                                             | false     | If true, the flow will be executed without actually submitting the order, it will only log the submitted details |
 
 # License
 
