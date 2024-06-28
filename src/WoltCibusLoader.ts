@@ -7,7 +7,7 @@ import { woltGiftCardUrl, woltHomepageUrl } from "./consts";
 import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
-import { WoltCibusLoaderConfig } from "./types";
+import { ClosestElement, WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
   gmailClient: GmailClient = new GmailClient();
@@ -40,7 +40,7 @@ export class WoltCibusLoader {
       page.goto(woltGiftCardUrl);
       await page.waitForNavigation();
       await this.rejectContinueOrderModal(page);
-      const { element, price } = await this.getGiftCardElementClosestToBalance(page, cibusBalance);
+      const { element, price } = await this.getClosestElementToBalance(page, cibusBalance);
 
       logger.info({ cibusBalance, price }, "Found the element with price closest to the balance");
 
@@ -51,7 +51,7 @@ export class WoltCibusLoader {
 
       await this.selectCibusPaymentMethod(page);
       const beforeOrderSubmit = await this.submitOrderWithCibusChallenge(page, price, cibusBalance);
-      if (!beforeOrderSubmit && this.config.testRun) {
+      if (!beforeOrderSubmit && this.config.dryRun) {
         logger.info(
           {
             orderPrice: price,
@@ -157,7 +157,7 @@ export class WoltCibusLoader {
     await this.validateCibusPrice(cibusIframeContent, price, cibusBalance);
 
     // if test run is enabled, return null and do not submit the order
-    if (this.config.testRun) {
+    if (this.config.dryRun) {
       return null;
     }
 
@@ -268,7 +268,7 @@ export class WoltCibusLoader {
       throw new Error(`Order validation failed, expected price: ${price}, got: ${totalPrice}`);
     }
 
-    if (totalPrice > cibusBalance && !this.config.shouldPassBalance) {
+    if (totalPrice > cibusBalance && !this.config.allowCreditCardCharge) {
       throw new Error(`Order validation failed, expected price not higher than: ${price}, got: ${totalPrice}`);
     }
   }
@@ -306,37 +306,38 @@ export class WoltCibusLoader {
   }
 
   /**
-   * Get the gift card element with the price closest to the balance.
-   * If shouldPassBalance is true, the price can be higher than the balance.
-   * This is useful if you have a credit card assosiated to your cibus account, and you want to avoid remaining balance in Cibus.
+   * Get the closest element to the balance in the gift card list.
+   * If the allowCreditCardCharge is enabled, the function will return the closest element with the price higher than the balance.
+   * Otherwise, the function will return the closest element with the price lower than the balance.
    */
-  private async getGiftCardElementClosestToBalance(page: Page, balance: number) {
+  private async getClosestElementToBalance(page: Page, balance: number): Promise<ClosestElement | null> {
     const giftCardElements = await page.$$(getTestIdSelector("horizontal-item-card-price"));
-    const shouldPassBalance = this.config.shouldPassBalance !== undefined ? this.config.shouldPassBalance : false;
-    let closestElement: { element: ElementHandle<Element>; absDiff: number; price: number } | null = null;
-
+    let closestHigherElement: ClosestElement | null = null;
+    let closestLowerElement: ClosestElement | null = null;
     for (const element of giftCardElements) {
-      const text = await page.evaluate((el) => el.textContent, element);
+      const text = await element.evaluate((el) => el.textContent);
       const price = parseFloat(text.replace("₪", ""));
       const diff = balance - price;
+      const type = diff >= 0 ? "lower" : "higher";
 
-      // Skipping the element if the price is not valid based on the shouldPassBalance config
-      if ((!shouldPassBalance && diff < 0) || (shouldPassBalance && diff > 0)) {
-        continue;
+      if (type === "lower" && (!closestLowerElement || Math.abs(diff) < closestLowerElement.absDiff)) {
+        closestLowerElement = { element, absDiff: Math.abs(diff), price };
       }
 
-      const absDiff = Math.abs(diff);
-
-      if (!closestElement || absDiff < closestElement.absDiff) {
-        closestElement = { element, absDiff, price };
+      if (type === "higher" && (!closestHigherElement || Math.abs(diff) < closestHigherElement.absDiff)) {
+        if (Math.abs(diff) < this.config.maxCreditCardCharge && this.config.allowCreditCardCharge) {
+          closestHigherElement = { element, absDiff: Math.abs(diff), price };
+        }
       }
     }
+
+    const closestElement = closestHigherElement ?? closestLowerElement;
 
     if (!closestElement) {
-      throw new Error("Could not find any gift card element with price closest to the balance.");
+      throw new Error("Could not find any gift card with a price close to the balance.");
     }
 
-    return { element: closestElement.element, price: closestElement.price };
+    return closestElement;
   }
 
   /**
