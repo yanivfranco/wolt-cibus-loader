@@ -250,7 +250,7 @@ export class WoltCibusLoader {
       const creditCardAmount = parseFloat(creditCardAmountString.split(":")[1].replace(`ש"ח`, "").trim());
       if (creditCardAmount > 0 && !this.config.allowCreditCardCharge) {
         throw new Error(
-          "Cibus validation failed: allowCreditCardCharge is false, but the credit card amount is higher than 0."
+          `Cibus validation failed: allowCreditCardCharge is false, but the credit card is about to be charged with: ${creditCardAmount}`
         );
       }
 
