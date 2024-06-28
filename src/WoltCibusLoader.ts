@@ -154,7 +154,7 @@ export class WoltCibusLoader {
     const cibusIframe = await page.waitForSelector("iframe[name='cibus-challenge']");
     const cibusIframeContent = await cibusIframe.contentFrame();
     await this.loginToCibusChallenge(cibusIframeContent);
-    await this.validateCibusPrice(cibusIframeContent, price, cibusBalance);
+    await this.validateCibusOrder(cibusIframeContent, price, cibusBalance);
 
     // if test run is enabled, return null and do not submit the order
     if (this.config.dryRun) {
@@ -219,9 +219,9 @@ export class WoltCibusLoader {
   }
 
   /**
-   * Validate the price in the cibus iframe. (yes, again, just to be sure)
+   * Validate the order in the cibus iframe. (yes, again)
    */
-  private async validateCibusPrice(frame: Frame, price: number, cibusBalance: number) {
+  private async validateCibusOrder(frame: Frame, price: number, cibusBalance: number) {
     const elements = await frame.$$("#hSubTitle");
     if (elements.length !== 1) {
       throw new Error("Could not find the price element in the cibus iframe");
@@ -233,11 +233,32 @@ export class WoltCibusLoader {
       throw new Error(`Price validation failed, expected price: ${price}, got: ${priceNumber}`);
     }
 
-    const balanceElement = await frame.$("#divUserInfo > big");
-    const balanceString = (await frame.evaluate((el) => el.textContent, balanceElement)).replace("₪", "");
-    const balanceFromIframe = parseFloat(balanceString);
-    if (balanceFromIframe !== cibusBalance) {
-      throw new Error(`Balance validation failed, expected balance: ${cibusBalance}, got: ${balanceFromIframe}`);
+    const shouldSkipBalanceValidation = this.config.balanceToLoad; // balance is overridden in the config
+
+    if (!shouldSkipBalanceValidation) {
+      const balanceElement = await frame.$("#divUserInfo > big");
+      const balanceString = (await frame.evaluate((el) => el.textContent, balanceElement)).replace("₪", "");
+      const balanceFromIframe = parseFloat(balanceString);
+      if (balanceFromIframe !== cibusBalance) {
+        throw new Error(`Balance validation failed, expected balance: ${cibusBalance}, got: ${balanceFromIframe}`);
+      }
+    }
+
+    const creditCardAmountElement = await frame.$("header > label");
+    if (creditCardAmountElement) {
+      const creditCardAmountString = await frame.evaluate((el) => el.textContent, creditCardAmountElement);
+      const creditCardAmount = parseFloat(creditCardAmountString.split(":")[1].replace(`ש"ח`, "").trim());
+      if (creditCardAmount > 0 && !this.config.allowCreditCardCharge) {
+        throw new Error(
+          `Cibus validation failed: allowCreditCardCharge is false, but the credit card is about to be charged with: ${creditCardAmount}`
+        );
+      }
+
+      if (creditCardAmount > this.config.maxCreditCardCharge) {
+        throw new Error(
+          `Cibus validation failed: Credit card is about to be charged with higher amount than the maxCreditCardCharge. amount: ${creditCardAmount}, max: ${this.config.maxCreditCardCharge}`
+        );
+      }
     }
   }
 
