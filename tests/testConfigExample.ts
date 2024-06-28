@@ -12,7 +12,7 @@ export const testConfig: WoltCibusLoaderConfig = {
     },
   },
 
-  shouldPassBalance: false,
+  allowCreditCardCharge: false,
   // testRun: true,
   balanceToLoad: 20,
   shouldReedemCode: true,
