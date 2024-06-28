@@ -1,5 +1,5 @@
 import { CibusScraperOptions } from "cibus-scraper";
-import { PuppeteerLaunchOptions } from "puppeteer";
+import { ElementHandle, PuppeteerLaunchOptions } from "puppeteer";
 
 export interface WoltCibusLoaderConfig {
   /**
