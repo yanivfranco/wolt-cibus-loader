@@ -1,5 +1,5 @@
 import { CibusScraperOptions } from "cibus-scraper";
-import { PuppeteerLaunchOptions } from "puppeteer";
+import { ElementHandle, PuppeteerLaunchOptions } from "puppeteer";
 
 export interface WoltCibusLoaderConfig {
   /**
@@ -20,10 +20,18 @@ export interface WoltCibusLoaderConfig {
   balanceToLoad?: number;
 
   /**
-   * Whether the closest gift card price should be higher than the cibus balance.
+   * Whether to find a gift card with price higher than the balance, charging the remaining balance with a credit card.
    * This is useful if you have a credit card assosiated to your cibus account, and you want to avoid remaining balance in Cibus.
+   * default: false
    */
-  shouldPassBalance?: boolean;
+  allowCreditCardCharge?: boolean;
+
+  /**
+   * The max amount to charge with the credit card.
+   * If no gift card is found in the given price range, the first lower price gift card will be used.
+   * default: 50
+   */
+  maxCreditCardCharge?: number;
 
   /**
    * Whether the code should be retrieved from the gift card mail and redeemed automatically.
@@ -45,5 +53,11 @@ export interface WoltCibusLoaderConfig {
   /**
    * If true, the flow will be executed without actually submitting the order, it will only log the submitted order details.
    */
-  testRun?: boolean;
+  dryRun?: boolean;
+}
+
+export interface ClosestElement {
+  element: ElementHandle<Element>;
+  absDiff: number;
+  price: number;
 }
