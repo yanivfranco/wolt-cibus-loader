@@ -1,5 +1,8 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
-  preset: "ts-jest",
+  preset: "babel-jest",
   testEnvironment: "node",
+  transform: {
+    "node_modules/puppeteer-real-browser": "ts-jest",
+  },
 };

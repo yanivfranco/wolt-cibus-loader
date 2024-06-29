@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "CommonJS",
     "noImplicitAny": true,
-    "lib": ["es6", "dom", "es2021"],
+    "lib": ["es6", "dom", "es2021", "ESNext"],
     "removeComments": true,
     "skipLibCheck": true,
     "preserveConstEnums": true,

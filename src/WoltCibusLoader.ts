@@ -1,6 +1,6 @@
 import { CibusScraper } from "cibus-scraper";
 import moment from "moment";
-import { ElementHandle, Frame, Page, executablePath } from "puppeteer";
+import { ElementHandle, Frame, Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import pluginStealth from "puppeteer-extra-plugin-stealth";
 import { woltGiftCardUrl, woltHomepageUrl } from "./consts";
@@ -8,11 +8,17 @@ import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
 import { WoltCibusLoaderConfig } from "./types";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { connect } = require("puppeteer-real-browser");
 
 export class WoltCibusLoader {
   gmailClient: GmailClient = new GmailClient();
 
   constructor(private config: WoltCibusLoaderConfig) {
+    if (this.config.woltEmail === undefined || this.config.woltEmail === "") {
+      throw new Error("Wolt email is required.");
+    }
+
     puppeteer.use(pluginStealth());
   }
 
@@ -28,10 +34,8 @@ export class WoltCibusLoader {
     logger.info({ cibusBalance }, "Got Cibus balance successfully");
     logger.info("Logging in to Wolt");
 
-    const options = this.createPuppeteerLaunchOptions();
-    const browser = await puppeteer.launch(options);
+    const { browser, page } = await this.launchBrowser();
     try {
-      const page = await browser.newPage();
       await page.goto(woltHomepageUrl);
       await this.login(page);
 
@@ -78,6 +82,18 @@ export class WoltCibusLoader {
     } finally {
       await browser.close();
     }
+  }
+
+  private async launchBrowser() {
+    const options = this.createPuppeteerLaunchOptions();
+    const { page, browser } = await connect({
+      headless: "auto",
+      args: options.args,
+      customConfig: options,
+    });
+    // const browser = await puppeteer.launch(options);
+    // const page = await browser.newPage();
+    return { browser, page };
   }
 
   /**
@@ -194,7 +210,7 @@ export class WoltCibusLoader {
         ...(this.config.puppeteerLaunchOptions?.args || []),
       ],
       ...this.config.puppeteerLaunchOptions,
-      executablePath: executablePath(),
+      // executablePath: executablePath(),
     };
   }
 

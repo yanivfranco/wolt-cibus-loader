@@ -10,6 +10,8 @@
   "homepage": "https://github.com/yanivfranco/wolt-cibus-loader",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:docker": "docker build -t wolt-cibus-loader .",
+    "build:all": "yarn build && yarn build:docker",
     "test": "jest",
     "lint": "eslint .  --ext .ts"
   },
@@ -19,6 +21,9 @@
     "@typescript-eslint/parser": "^7.14.1",
     "add": "^2.0.6",
     "cibus-scraper": "^1.0.3",
+    "cron": "^3.1.7",
+    "dotenv": "^16.4.5",
+    "download-chromium": "^3.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "googleapis": "105",
     "moment": "^2.30.1",
@@ -29,7 +34,9 @@
     "puppeteer": "^22.12.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "puppeteer-real-browser": "^1.2.18",
     "ts-pattern": "^5.1.2",
+    "xvfb": "^0.4.0",
     "yarn": "^1.22.22"
   },
   "devDependencies": {
