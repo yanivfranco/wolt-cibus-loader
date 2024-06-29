@@ -1,5 +1,6 @@
 import moment from "moment";
 import { WoltCibusLoader } from "../src/WoltCibusLoader";
+// eslint-disable-next-line import/extensions
 import { testConfig } from "./testConfig";
 //10 min timeout
 jest.setTimeout(moment.duration(10, "minutes").asMilliseconds());
