@@ -6,3 +6,4 @@ dist/*
 testConfig.ts
 google-credentials.json
 token.json
+yarn-error.log
