@@ -7,6 +7,7 @@ import { woltGiftCardUrl, woltHomepageUrl } from "./consts";
 import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
+import { TelegramBotClient } from "./telegramClient";
 import { ClosestElement, WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
@@ -297,33 +298,55 @@ export class WoltCibusLoader {
   /**
    * Login to the Wolt website. The login is done by sending an email with a magic link.
    * If the getWoltLoginMagicLink function is provided in the config, it will be used to get the magic link.
-   * Otherwise, the magic link will be fetched using the getWoltLoginMagicLink function from the gmailClient.
+   * Otherwise, the magic link will be fetched from gmail & telegram.
    */
   private async login(page: Page) {
-    await waitAndClick(page, getTestIdSelector("UserStatus.Login"));
-    await waitAndType(page, getTestIdSelector("MethodSelect.EmailInput"), this.config.woltEmail);
-    const beforeEmailSent = moment();
-    await waitAndClick(page, getTestIdSelector("StepMethodSelect.NextButton"));
-    await page.waitForSelector(getTestIdSelector("EmailSent.Resend")).catch(() => {
-      throw new Error(
-        "Could not find the email sent message, probably the email is invalid or not registered in Wolt."
-      );
-    });
+    const loginMagicLink = this.config.getWoltLoginMagicLink
+      ? await this.config.getWoltLoginMagicLink()
+      : await this.getMagicLinkViaTelegram();
 
-    let loginMagicLink: string;
-    if (this.config.getWoltLoginMagicLink) {
-      logger.info("Email sent, getting magic link from provided getWoltLoginMagicLink function");
-      loginMagicLink = await this.config.getWoltLoginMagicLink();
-    } else {
-      logger.info("Email sent, waiting for magic link using telegram bot");
-      loginMagicLink = await doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
-    }
+    logger.info("Magic link received, logging in to Wolt");
+
+    // await waitAndClick(page, getTestIdSelector("UserStatus.Login"));
+    // await waitAndType(page, getTestIdSelector("MethodSelect.EmailInput"), this.config.woltEmail);
+    // const beforeEmailSent = moment();
+    // await waitAndClick(page, getTestIdSelector("StepMethodSelect.NextButton"));
+    // await page.waitForSelector(getTestIdSelector("EmailSent.Resend")).catch(() => {
+    //   throw new Error(
+    //     "Could not find the email sent message, probably the email is invalid or not registered in Wolt."
+    //   );
+    // });
+
+    // let loginMagicLink: string;
+    // if (this.config.getWoltLoginMagicLink) {
+    //   logger.info("Email sent, getting magic link from provided getWoltLoginMagicLink function");
+    //   loginMagicLink = await this.config.getWoltLoginMagicLink();
+    // } else {
+    //   logger.info("Email sent, waiting for magic link using telegram bot");
+    //   loginMagicLink = await doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
+    // }
 
     await page.goto(loginMagicLink);
-    await page.waitForNavigation();
+    const loginButton = await page.waitForSelector("#mainContent button");
+    await loginButton.click();
     await page.waitForSelector(getTestIdSelector("UserStatusDropdown")).catch(() => {
       throw new Error("Could not find the UserStatusDropdown, probably the login failed.");
     });
+  }
+
+  private async getMagicLinkViaTelegram() {
+    const bot = new TelegramBotClient(this.config.telegramBot.token, this.config.telegramBot.userChatId);
+    const beforeEmailSent = moment();
+
+    // Not using "await" here to avoid blocking the flow
+    bot.sendEmailLoginMessageWithRetry();
+
+    const loginMagicLink = await bot.onLoginAck(async () => {
+      logger.info("Login ack received, Trying to get the magic link from the email.");
+      return doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
+    });
+
+    return loginMagicLink;
   }
 
   /**
