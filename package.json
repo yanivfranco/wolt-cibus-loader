@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google-cloud/local-auth": "2.1.0",
+    "@types/random-useragent": "^0.3.3",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
     "add": "^2.0.6",
@@ -35,6 +36,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-real-browser": "^1.2.18",
+    "random-useragent": "^0.5.0",
     "ts-pattern": "^5.1.2",
     "xvfb": "^0.4.0",
     "yarn": "^1.22.22"

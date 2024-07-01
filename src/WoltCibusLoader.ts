@@ -3,13 +3,12 @@ import moment from "moment";
 import { ElementHandle, Frame, Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import pluginStealth from "puppeteer-extra-plugin-stealth";
+import randomUseragent from "random-useragent";
 import { woltGiftCardUrl, woltHomepageUrl } from "./consts";
 import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
 import { ClosestElement, WoltCibusLoaderConfig } from "./types";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { connect } = require("puppeteer-real-browser");
 
 export class WoltCibusLoader {
   gmailClient: GmailClient = new GmailClient();
@@ -18,8 +17,6 @@ export class WoltCibusLoader {
     if (this.config.woltEmail === undefined || this.config.woltEmail === "") {
       throw new Error("Wolt email is required.");
     }
-
-    puppeteer.use(pluginStealth());
   }
 
   async loadRemainingCibusBalanceToWolt() {
@@ -80,19 +77,83 @@ export class WoltCibusLoader {
       logger.error({ error: typedError?.message, stack: typedError?.stack }, "Error occurred during the flow.");
       throw error;
     } finally {
+      await page.screenshot({ path: "example.png", fullPage: true });
+
       await browser.close();
     }
   }
 
   private async launchBrowser() {
     const options = this.createPuppeteerLaunchOptions();
-    const { page, browser } = await connect({
-      headless: "auto",
-      args: options.args,
-      customConfig: options,
+    const userAgent = randomUseragent.getRandom();
+
+    // const dynamicImport = new Function("specifier", "return import(specifier)");
+    // const { connect } = await dynamicImport("puppeteer-real-browser");
+    // const { page, browser } = await connect({
+    //   headless: true,
+    //   args: options.args,
+    //   customConfig: options,
+    // });
+
+    puppeteer.use(pluginStealth());
+
+    const browser = await puppeteer.launch(options);
+    const page = await browser.newPage();
+
+    //Randomize viewport size
+    await page.setViewport({
+      width: 1920 + Math.floor(Math.random() * 100),
+      height: 3000 + Math.floor(Math.random() * 100),
+      deviceScaleFactor: 1,
+      hasTouch: false,
+      isLandscape: false,
+      isMobile: false,
     });
-    // const browser = await puppeteer.launch(options);
-    // const page = await browser.newPage();
+    await page.setUserAgent(userAgent);
+    await page.setJavaScriptEnabled(true);
+
+    await page.evaluateOnNewDocument(() => {
+      // Pass webdriver check
+      Object.defineProperty(navigator, "webdriver", {
+        get: () => false,
+      });
+    });
+
+    await page.evaluateOnNewDocument(() => {
+      // Pass chrome check
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      window.chrome = {
+        runtime: {},
+        // etc.
+      };
+    });
+
+    await page.evaluateOnNewDocument(() => {
+      //Pass notifications check
+      const originalQuery = window.navigator.permissions.query;
+      return (window.navigator.permissions.query = (parameters) =>
+        parameters.name === "notifications"
+          ? Promise.resolve({ state: Notification.permission } as PermissionStatus)
+          : originalQuery(parameters));
+    });
+
+    await page.evaluateOnNewDocument(() => {
+      // Overwrite the `plugins` property to use a custom getter.
+      Object.defineProperty(navigator, "plugins", {
+        // This just needs to have `length > 0` for the current test,
+        // but we could mock the plugins too if necessary.
+        get: () => [1, 2, 3, 4, 5],
+      });
+    });
+
+    await page.evaluateOnNewDocument(() => {
+      // Overwrite the `languages` property to use a custom getter.
+      Object.defineProperty(navigator, "languages", {
+        get: () => ["en-US", "en"],
+      });
+    });
+
     return { browser, page };
   }
 
@@ -203,7 +264,6 @@ export class WoltCibusLoader {
    */
   private createPuppeteerLaunchOptions() {
     return {
-      defaultViewport: { width: 1100, height: 800 }, // essential for functionallity (narrower viewport tranform to mobile view and breaks the flow)
       args: [
         "--disable-web-security", // essential for iframe content access
         "--disable-features=IsolateOrigins,site-per-process", // essential for iframe content access

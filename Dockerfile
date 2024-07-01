@@ -2,8 +2,10 @@ FROM node:18 AS builder
 
 WORKDIR /usr/src/app
 COPY package.json ./
-COPY yarn.lock ./
-RUN yarn
+# COPY yarn.lock ./
+COPY package-lock.json ./
+
+RUN npm ci --only=production
 COPY ./dist .
 COPY ./google-credentials.json .
 COPY ./token.json .
@@ -59,7 +61,7 @@ WORKDIR /usr/src
 
 COPY --from=builder /usr/src/app .
 ENV NODE_ENV=production
-CMD node ./main.js
+CMD node ./main2.js
 
 #####################################################################
 
