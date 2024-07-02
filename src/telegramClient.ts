@@ -16,6 +16,13 @@ export class TelegramBotClient {
     this.bot = new TelegramBot(token, { polling: true });
   }
 
+  sendMessage(text: string, options?: TelegramBot.SendMessageOptions): Promise<TelegramBot.Message> {
+    return this.bot.sendMessage(this.chatId, `🍟<b>${moment().format("DD/MM/YYYY HH:mm:ss")}</b>🍟: ${text}`, {
+      ...options,
+      parse_mode: "HTML",
+    });
+  }
+
   /**
    * Wait for the login acknoledgement button press.
    * Runs the given function when the button is pressed and resolves the promise with the result.
@@ -32,10 +39,9 @@ export class TelegramBotClient {
           // Handle the login ack
           await this.bot.answerCallbackQuery(query.id, { text: "Thank you. Proceeding with loading your cibus" });
           await this.bot.deleteMessage(this.chatId, query.message.message_id);
-          await this.bot.sendMessage(this.chatId, "Thank you. Proceeding with loading your cibus");
+          await this.sendMessage("Thank you. Proceeding with loading your cibus credits to wolt... 🍔🍟🥤");
           this.didLoginAcked = true;
           resolve(await onLoginAck());
-          this.stopBot();
         }
       });
 
@@ -46,7 +52,7 @@ export class TelegramBotClient {
     });
   }
 
-  async sendEmailLoginMessageWithRetry(
+  async sendLoginRequestToUserWithRetries(
     timeout: number = moment.duration(60, "minutes").asMilliseconds(),
     retryInterval: number = moment.duration(5, "minutes").asMilliseconds()
   ): Promise<void> {
@@ -61,24 +67,26 @@ export class TelegramBotClient {
         await this.bot.deleteMessage(this.chatId, lastMessage.message_id);
       }
 
-      lastMessage = await this.sendEmailLoginMessage();
+      lastMessage = await this.sendLoginRequestToUser();
       // eslint-disable-next-line @typescript-eslint/no-loop-func
       await new Promise((resolve) => setTimeout(resolve, retryInterval));
       retries++;
     }
   }
 
-  async sendEmailLoginMessage(): Promise<TelegramBot.Message> {
+  /**
+   * Send a login request to the user, with a button to acknoledge once email is sent.
+   */
+  async sendLoginRequestToUser(): Promise<TelegramBot.Message> {
     logger.info({ chatId: this.chatId }, "Sending email login message");
-    return this.bot.sendMessage(
-      this.chatId,
-      "Please login in to Wolt via this link: \n https://wolt.com/en/me/personal-info",
+    return this.sendMessage(
+      "Please start an email login flow in Wolt via this link: \n https://wolt.com/en/me/personal-info \nPress the button below once the email is sent. 👇",
       {
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "I have logged in",
+                text: "Login email sent 📧👍",
                 callback_data: TelegramBotClient.loginButtonCallbackData,
               },
             ],
@@ -88,7 +96,7 @@ export class TelegramBotClient {
     );
   }
 
-  stopBot(): void {
+  stop(): void {
     this.bot.stopPolling();
   }
 }

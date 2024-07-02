@@ -1,5 +1,13 @@
 /**
- * This is an example of how to use the WoltCibusLoader class.
+ * This is an example of how to use the WoltCibusLoader.
+ * Assumed to be run on docker container with chromium installed. (see Dockerfile)
+ * Provide the following environment variables in the .env file:
+ * WOLT_EMAIL - Wolt user email
+ * CIBUS_USERNAME - Cibus username
+ * CIBUS_PASSWORD - Cibus password
+ * CIBUS_COMPANY - Cibus company name
+ * TELEGRAM_BOT_TOKEN - Telegram bot token
+ * TELEGRAM_USER_CHAT_ID - Telegram user chat id
  */
 
 import { CronJob } from "cron";
@@ -39,11 +47,12 @@ if (
       userChatId: Number(process.env.TELEGRAM_USER_CHAT_ID),
     },
     allowCreditCardCharge: false,
-    dryRun: true,
+    maxCreditCardCharge: 50,
+    balanceToLoad: 50,
+    dryRun: false,
     shouldReedemCode: true,
-    balanceToLoad: 20,
     puppeteerLaunchOptions: {
-      headless: false,
+      headless: true,
       slowMo: 50,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
       executablePath: "/usr/bin/chromium",
@@ -51,7 +60,7 @@ if (
   });
 
   const job = CronJob.from({
-    cronTime: "0 17 * * 4" /* every Thursday at 17:00 */,
+    cronTime: "0 16 * * 4" /* every Thursday at 16:00 */,
     onTick: async () => {
       await woltCibusLoader.loadRemainingCibusBalanceToWolt();
     },
