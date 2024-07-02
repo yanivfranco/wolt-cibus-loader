@@ -1,27 +1,34 @@
 import { CibusScraper } from "cibus-scraper";
 import moment from "moment";
-import { ElementHandle, Frame, Page, executablePath } from "puppeteer";
+import { ElementHandle, Frame, Page } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import pluginStealth from "puppeteer-extra-plugin-stealth";
 import { woltGiftCardUrl, woltHomepageUrl } from "./consts";
 import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
+import { TelegramBotClient } from "./telegramClient";
 import { ClosestElement, WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
   gmailClient: GmailClient = new GmailClient();
 
+  telegramBot?: TelegramBotClient;
+
   constructor(private config: WoltCibusLoaderConfig) {
     puppeteer.use(pluginStealth());
+    if (this.config.telegramBot) {
+      this.telegramBot = new TelegramBotClient(this.config.telegramBot.token, this.config.telegramBot.userChatId);
+    }
   }
 
   async loadRemainingCibusBalanceToWolt() {
-    logger.info("Flow started");
-    logger.info("Getting current cibus balance");
+    logger.info("Flow started, getting the cibus balance");
+    await this.telegramBot?.sendMessage("WoltCibusLoader started.");
     const cibusBalance =
       this.config.balanceToLoad !== undefined ? this.config.balanceToLoad : await this.getCibusBalance();
     if (cibusBalance <= 0) {
+      await this.telegramBot?.sendMessage("Cibus balance is 0, nothing to load to Wolt.");
       throw new Error("Cibus balance is 0, nothing to load to Wolt.");
     }
 
@@ -70,13 +77,19 @@ export class WoltCibusLoader {
         await this.redeemCode(page, beforeOrderSubmit);
       }
 
+      await this.telegramBot?.sendMessage(
+        `✅ Order submitted successfully! Order number: ${orderNumber} 🥳\n Cibus balance: ${cibusBalance}.\n Wolt gift card price: ${price}`
+      );
+
       return orderNumber;
     } catch (error: unknown | Error) {
       const typedError = error as Error;
       logger.error({ error: typedError?.message, stack: typedError?.stack }, "Error occurred during the flow.");
+      await this.telegramBot?.sendMessage(`❌ Error occurred during the flow: ${typedError.message} 😞`);
       throw error;
     } finally {
       await browser.close();
+      this.telegramBot.stop();
     }
   }
 
@@ -194,7 +207,6 @@ export class WoltCibusLoader {
         ...(this.config.puppeteerLaunchOptions?.args || []),
       ],
       ...this.config.puppeteerLaunchOptions,
-      executablePath: executablePath(),
     };
   }
 
@@ -245,8 +257,8 @@ export class WoltCibusLoader {
     }
 
     const creditCardAmountElement = await frame.$("header > label");
-    if (creditCardAmountElement) {
-      const creditCardAmountString = await frame.evaluate((el) => el.textContent, creditCardAmountElement);
+    const creditCardAmountString = await frame.evaluate((el) => el.textContent, creditCardAmountElement);
+    if (creditCardAmountElement && creditCardAmountString.includes("ש")) {
       const creditCardAmount = parseFloat(creditCardAmountString.split(":")[1].replace(`ש"ח`, "").trim());
       if (creditCardAmount > 0 && !this.config.allowCreditCardCharge) {
         throw new Error(
@@ -297,33 +309,62 @@ export class WoltCibusLoader {
   /**
    * Login to the Wolt website. The login is done by sending an email with a magic link.
    * If the getWoltLoginMagicLink function is provided in the config, it will be used to get the magic link.
-   * Otherwise, the magic link will be fetched using the getWoltLoginMagicLink function from the gmailClient.
+   * Otherwise, the magic link will be fetched from gmail & telegram.
    */
   private async login(page: Page) {
-    await waitAndClick(page, getTestIdSelector("UserStatus.Login"));
-    await waitAndType(page, getTestIdSelector("MethodSelect.EmailInput"), this.config.woltEmail);
-    const beforeEmailSent = moment();
-    await waitAndClick(page, getTestIdSelector("StepMethodSelect.NextButton"));
-    await page.waitForSelector(getTestIdSelector("EmailSent.Resend")).catch(() => {
-      throw new Error(
-        "Could not find the email sent message, probably the email is invalid or not registered in Wolt."
-      );
-    });
+    // Unfortunatly, login automation is not possible due to detection of the puppeteer. (probably due to the headless mode)
+    // Should uncomment the following code if the login automation is possible in the future.
 
-    let loginMagicLink: string;
-    if (this.config.getWoltLoginMagicLink) {
-      logger.info("Email sent, getting magic link from provided getWoltLoginMagicLink function");
-      loginMagicLink = await this.config.getWoltLoginMagicLink();
-    } else {
-      logger.info("Email sent, waiting for magic link using telegram bot");
-      loginMagicLink = await doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
-    }
+    // await waitAndClick(page, getTestIdSelector("UserStatus.Login"));
+    // await waitAndType(page, getTestIdSelector("MethodSelect.EmailInput"), this.config.woltEmail);
+    // const beforeEmailSent = moment();
+    // await waitAndClick(page, getTestIdSelector("StepMethodSelect.NextButton"));
+    // await page.waitForSelector(getTestIdSelector("EmailSent.Resend")).catch(() => {
+    //   throw new Error(
+    //     "Could not find the email sent message, probably the email is invalid or not registered in Wolt."
+    //   );
+    // });
+
+    // let loginMagicLink: string;
+    // if (this.config.getWoltLoginMagicLink) {
+    //   logger.info("Email sent, getting magic link from provided getWoltLoginMagicLink function");
+    //   loginMagicLink = await this.config.getWoltLoginMagicLink();
+    // } else {
+    //   logger.info("Email sent, waiting for magic link using telegram bot");
+    //   loginMagicLink = await doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
+    // }
+
+    const loginMagicLink = this.config.getWoltLoginMagicLink
+      ? await this.config.getWoltLoginMagicLink()
+      : await this.getMagicLinkViaTelegram();
+
+    logger.info("Magic link received, logging in to Wolt");
 
     await page.goto(loginMagicLink);
-    await page.waitForNavigation();
+    const loginButton = await page.waitForSelector("#mainContent button");
+    await loginButton.click();
     await page.waitForSelector(getTestIdSelector("UserStatusDropdown")).catch(() => {
       throw new Error("Could not find the UserStatusDropdown, probably the login failed.");
     });
+  }
+
+  /**
+   * Get the magic link from the email using the telegram bot.
+   * The bot will send a message to the user requesting to initiate the login in Wolt.
+   * The bot will wait for the login acknoledgement and return the magic link from the email.
+   */
+  private async getMagicLinkViaTelegram() {
+    const beforeEmailSent = moment();
+
+    // Not using "await" here to avoid blocking the flow
+    this.telegramBot.sendLoginRequestToUserWithRetries();
+
+    const loginMagicLink = await this.telegramBot.onLoginAck(async () => {
+      logger.info("Login ack received, Trying to get the magic link from the email.");
+      return doWithRetries(() => this.gmailClient.getWoltLoginMagicLink(beforeEmailSent));
+    });
+
+    return loginMagicLink;
   }
 
   /**

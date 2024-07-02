@@ -8,6 +8,20 @@ export interface WoltCibusLoaderConfig {
   woltEmail: string;
 
   /**
+   * Telegram bot configuration for login acknoledgement
+   */
+  telegramBot?: {
+    token: string;
+    userChatId: number;
+  };
+
+  /**
+   * Function that returns the magic link from the login email received.
+   * default: () => Promise<string> | string
+   */
+  getWoltLoginMagicLink?: () => Promise<string> | string;
+
+  /**
    * Options for the cibus scraper in order to get current balance and login to the cibus website
    * Either the cibusScraperOptions or the balanceToLoad should be provided.
    */
@@ -38,12 +52,6 @@ export interface WoltCibusLoaderConfig {
    * default: true
    */
   shouldReedemCode?: boolean;
-
-  /**
-   * Function that returns the magic link from the login email received.
-   * default: () => Promise<string> | string
-   */
-  getWoltLoginMagicLink?: () => Promise<string> | string;
 
   /**
    * Puppeteer launch options to be passed to the puppeteer.launch function
