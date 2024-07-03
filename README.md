@@ -2,7 +2,9 @@
 
 This project is here to help you and load your cibus extra credits to wolt.
 
-After I lost few thousands shekels due to expiery of cibus credits, I decided to autotmate the process (which is cumbersome and painfull, regardless), and save my food money.
+After a few thousands shekels have been lost due to expiery of cibus credits, I decided to autotmate the process (which regardless, is cumbersome and painfull), and save my food money.
+
+> **NOTE: Unfortunately, wolt login process is not fully automated, and requires user interaction (via telegram bot). This is due to the fact that wolt probably has a bot detection mechanism, which prevent emails to be sent from a non-human source. If you have any ideas on how to bypass and automate this process, please let me know.**
 
 # Prerequisites
 
