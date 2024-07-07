@@ -70,15 +70,15 @@ export class WoltCibusLoader {
       }
 
       const orderNumber = await this.validateOrderSuccess(page);
-
-      logger.info({ receipt: `https://wolt.com/en/me/order-history/${orderNumber}` }, "Order submitted successfully!");
+      const orderUrl = `https://wolt.com/en/me/order-history/${orderNumber}`;
+      logger.info({ receipt: orderUrl }, "Order submitted successfully!");
 
       if (this.config.shouldReedemCode !== false) {
         await this.redeemCode(page, beforeOrderSubmit);
       }
 
       await this.telegramBot?.sendMessage(
-        `✅ Order submitted successfully! Order number: ${orderNumber} 🥳\n Cibus balance: ${cibusBalance}.\n Wolt gift card price: ${price}`
+        `✅ Order submitted successfully! 🥳 \n Order: ${orderUrl} \n Cibus balance: ${cibusBalance}.\n Wolt gift card price: ${price}`
       );
 
       return orderNumber;
