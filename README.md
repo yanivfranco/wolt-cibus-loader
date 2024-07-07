@@ -86,9 +86,13 @@ You should keep this file safe and not share it with anyone.
 
 > **IMPORTANT: Don't forget to add the `token.json` and `google-credentials.json` to your `.gitignore` file!**
 
-### Subsequent runs
+#### Subsequent runs
 
 Just remove the `dryRun` option, and you are good to go.
+
+### Docker
+
+Feel free to use the example `main.ts` & `Dockerfile` to create a docker image and use it as you please.
 
 # API
 
