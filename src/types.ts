@@ -1,5 +1,6 @@
 import { CibusScraperOptions } from "cibus-scraper";
 import { ElementHandle, PuppeteerLaunchOptions } from "puppeteer";
+import { JSONCredentials } from "./gmailClient";
 
 export interface WoltCibusLoaderConfig {
   /**
@@ -14,6 +15,12 @@ export interface WoltCibusLoaderConfig {
     token: string;
     userChatId: number;
   };
+
+  /**
+   * Gmail user credentials
+   * If not provided, will try to load from the token.json file or fresh login will be required.
+   */
+  gmailUserCredentials?: JSONCredentials;
 
   /**
    * Function that returns the magic link from the login email received.

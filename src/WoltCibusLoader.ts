@@ -11,15 +11,25 @@ import { TelegramBotClient } from "./telegramClient";
 import { ClosestElement, WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
-  gmailClient: GmailClient = new GmailClient();
+  gmailClient: GmailClient;
 
   telegramBot?: TelegramBotClient;
 
   constructor(private config: WoltCibusLoaderConfig) {
+    if (!config.cibusScraperOptions && !config.balanceToLoad) {
+      throw new Error("Either the cibusScraperOptions or the balanceToLoad should be provided.");
+    }
+
+    if (!config.telegramBot && !config.getWoltLoginMagicLink) {
+      throw new Error("Either the telegramBot or the getWoltLoginMagicLink should be provided.");
+    }
+
     puppeteer.use(pluginStealth());
     if (this.config.telegramBot) {
       this.telegramBot = new TelegramBotClient(this.config.telegramBot.token, this.config.telegramBot.userChatId);
     }
+
+    this.gmailClient = new GmailClient(this.config.gmailUserCredentials);
   }
 
   async loadRemainingCibusBalanceToWolt() {

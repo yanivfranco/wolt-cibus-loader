@@ -9,6 +9,7 @@ import { logger } from "./logger";
 
 type OAuth2Client = Awaited<ReturnType<typeof authenticate>>;
 type JSONClient = ReturnType<typeof google.auth.fromJSON>;
+export type JSONCredentials = Parameters<typeof google.auth.fromJSON>[0];
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
@@ -19,14 +20,25 @@ const TOKEN_PATH = path.join(process.cwd(), "token.json");
 const CREDENTIALS_PATH = path.join(process.cwd(), "google-credentials.json");
 
 export class GmailClient {
-  private client: OAuth2Client | JSONClient;
-
   private gmail: gmail_v1.Gmail;
+
+  private client: OAuth2Client | JSONClient;
 
   private initialized = false;
 
+  constructor(private credentials: JSONCredentials = null) {}
+
   async init() {
-    await this.authorize();
+    if (this.initialized) {
+      return;
+    }
+
+    if (this.credentials) {
+      logger.info("Using provided credentials for google user.");
+      this.client = google.auth.fromJSON(this.credentials);
+    } else {
+      await this.localAuthorize();
+    }
 
     this.gmail = google.gmail({ version: "v1", auth: this.client as OAuth2Client });
     this.initialized = true;
@@ -37,7 +49,7 @@ export class GmailClient {
    *
    * @return {Promise<OAuth2Client|null>}
    */
-  async loadSavedCredentialsIfExist() {
+  async loadLocalSavedCredentialsIfExist() {
     try {
       const content = await fs.readFile(TOKEN_PATH, "utf8");
       const credentials = JSON.parse(content);
@@ -69,9 +81,9 @@ export class GmailClient {
   /**
    * Load or request or authorization to call APIs.
    */
-  async authorize(): Promise<void> {
+  async localAuthorize(): Promise<void> {
     logger.info("Authorizing google user...");
-    let client: OAuth2Client | JSONClient = await this.loadSavedCredentialsIfExist();
+    let client: OAuth2Client | JSONClient = await this.loadLocalSavedCredentialsIfExist();
     if (client) {
       logger.info("Loaded google user credentials from file.");
       this.client = client;
