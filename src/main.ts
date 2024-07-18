@@ -39,35 +39,36 @@ if (
       puppeteerLaunchOptions: {
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        executablePath: "/usr/bin/chromium",
+        // executablePath: "/usr/bin/chromium",
       },
     },
     telegramBot: {
       token: process.env.TELEGRAM_BOT_TOKEN,
       userChatId: Number(process.env.TELEGRAM_USER_CHAT_ID),
     },
-    allowCreditCardCharge: false,
+    allowCreditCardCharge: true,
     maxCreditCardCharge: 50,
-    balanceToLoad: 50,
+    // balanceToLoad: 20,
     dryRun: false,
     shouldReedemCode: true,
     puppeteerLaunchOptions: {
       headless: true,
       slowMo: 50,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      executablePath: "/usr/bin/chromium",
+      // executablePath: "/usr/bin/chromium",
     },
   });
+  woltCibusLoader.loadRemainingCibusBalanceToWolt();
 
-  const job = CronJob.from({
-    cronTime: "0 16 * * 4" /* every Thursday at 16:00 */,
-    onTick: async () => {
-      await woltCibusLoader.loadRemainingCibusBalanceToWolt();
-    },
-    start: true,
-    timeZone: "Asia/Jerusalem",
-    runOnInit: true,
-  });
+  // const job = CronJob.from({
+  //   cronTime: "0 16 * * 4" /* every Thursday at 16:00 */,
+  //   onTick: async () => {
+  //     await woltCibusLoader.loadRemainingCibusBalanceToWolt();
+  //   },
+  //   start: true,
+  //   timeZone: "Asia/Jerusalem",
+  //   runOnInit: true,
+  // });
 
-  job.start();
+  // job.start();
 })();

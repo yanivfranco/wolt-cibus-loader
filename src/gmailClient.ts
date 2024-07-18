@@ -1,15 +1,15 @@
 import { authenticate } from "@google-cloud/local-auth";
 import * as fs from "fs/promises";
-import { gmail_v1, google } from "googleapis";
 import moment from "moment";
 import * as path from "path";
 import PDFParser from "pdf2json";
 import * as process from "process";
 import { logger } from "./logger";
+import { auth, Credentials, OAuth2Client } from "google-auth-library";
+import { GoogleAuth, JSONClient } from "google-auth-library/build/src/auth/googleauth";
+import { gmail, gmail_v1 } from "@googleapis/gmail";
 
-type OAuth2Client = Awaited<ReturnType<typeof authenticate>>;
-type JSONClient = ReturnType<typeof google.auth.fromJSON>;
-export type JSONCredentials = Parameters<typeof google.auth.fromJSON>[0];
+export type JSONCredentials = Credentials
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
@@ -35,12 +35,12 @@ export class GmailClient {
 
     if (this.credentials) {
       logger.info("Using provided credentials for google user.");
-      this.client = google.auth.fromJSON(this.credentials);
+      this.client = auth.fromJSON(this.credentials);
     } else {
       await this.localAuthorize();
     }
 
-    this.gmail = google.gmail({ version: "v1", auth: this.client as OAuth2Client });
+    this.gmail = gmail({ version: "v1", auth: this.client });
     this.initialized = true;
   }
 
@@ -49,11 +49,11 @@ export class GmailClient {
    *
    * @return {Promise<OAuth2Client|null>}
    */
-  async loadLocalSavedCredentialsIfExist() {
+  async loadLocalSavedCredentialsIfExist() :Promise<JSONClient> {
     try {
       const content = await fs.readFile(TOKEN_PATH, "utf8");
       const credentials = JSON.parse(content);
-      return google.auth.fromJSON(credentials);
+      return auth.fromJSON(credentials)
     } catch (err) {
       return null;
     }
@@ -83,7 +83,7 @@ export class GmailClient {
    */
   async localAuthorize(): Promise<void> {
     logger.info("Authorizing google user...");
-    let client: OAuth2Client | JSONClient = await this.loadLocalSavedCredentialsIfExist();
+    let client: any = await this.loadLocalSavedCredentialsIfExist();
     if (client) {
       logger.info("Loaded google user credentials from file.");
       this.client = client;
@@ -93,6 +93,7 @@ export class GmailClient {
     logger.info(
       "No saved credentials found, this is probably a first run. requesting authorization... (make sure to run this on your local machine)"
     );
+
     client = await authenticate({
       scopes: SCOPES,
       keyfilePath: CREDENTIALS_PATH,
