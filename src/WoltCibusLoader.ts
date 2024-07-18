@@ -99,7 +99,7 @@ export class WoltCibusLoader {
       throw error;
     } finally {
       await browser.close();
-      this.telegramBot.stop();
+      this.telegramBot?.stop();
     }
   }
 

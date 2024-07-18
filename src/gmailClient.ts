@@ -8,8 +8,6 @@ import PDFParser from "pdf2json";
 import * as process from "process";
 import { logger } from "./logger";
 
-export type JSONCredentials = Credentials;
-
 // If modifying these scopes, delete token.json.
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -25,7 +23,7 @@ export class GmailClient {
 
   private initialized = false;
 
-  constructor(private credentials: JSONCredentials = null) {}
+  constructor(private credentials: Credentials = null) {}
 
   async init() {
     if (this.initialized) {
