@@ -76,3 +76,10 @@ export interface ClosestElement {
   absDiff: number;
   price: number;
 }
+
+export interface LoadResponse {
+  orderNumber: string;
+  orderUrl: string;
+  giftCardPrice: number;
+  creditCardCharge: number;
+}

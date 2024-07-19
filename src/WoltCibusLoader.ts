@@ -8,7 +8,7 @@ import { GmailClient } from "./gmailClient";
 import { doWithRetries, getTestIdSelector, waitAndClick, waitAndType } from "./helpers";
 import { logger } from "./logger";
 import { TelegramBotClient } from "./telegramClient";
-import { ClosestElement, WoltCibusLoaderConfig } from "./types";
+import { ClosestElement, LoadResponse, WoltCibusLoaderConfig } from "./types";
 
 export class WoltCibusLoader {
   gmailClient: GmailClient;
@@ -35,9 +35,8 @@ export class WoltCibusLoader {
   /**
    * Main flow of the WoltCibusLoader.
    * Loads the remaining cibus balance to Wolt using gift cards.
-   * @returns wolt order number
    */
-  async loadRemainingCibusBalanceToWolt() {
+  async loadRemainingCibusBalanceToWolt(): Promise<LoadResponse> {
     logger.info("Flow started, getting the cibus balance");
     await this.telegramBot?.sendMessage("WoltCibusLoader started.");
     const cibusBalance =
@@ -96,7 +95,12 @@ export class WoltCibusLoader {
         `✅ Order submitted successfully! 🥳 \n Order: ${orderUrl} \n Cibus balance: ${cibusBalance}.\n Wolt gift card price: ${price}`
       );
 
-      return orderNumber;
+      return {
+        orderNumber,
+        orderUrl,
+        giftCardPrice: price,
+        creditCardCharge: this.config.allowCreditCardCharge ? price - cibusBalance : 0,
+      };
     } catch (error: unknown | Error) {
       const typedError = error as Error;
       logger.error({ error: typedError?.message, stack: typedError?.stack }, "Error occurred during the flow.");
