@@ -32,6 +32,11 @@ export class WoltCibusLoader {
     this.gmailClient = new GmailClient(this.config.gmailUserCredentials);
   }
 
+  /**
+   * Main flow of the WoltCibusLoader.
+   * Loads the remaining cibus balance to Wolt using gift cards.
+   * @returns wolt order number
+   */
   async loadRemainingCibusBalanceToWolt() {
     logger.info("Flow started, getting the cibus balance");
     await this.telegramBot?.sendMessage("WoltCibusLoader started.");

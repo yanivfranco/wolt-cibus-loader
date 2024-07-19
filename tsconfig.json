@@ -3,13 +3,14 @@
     "module": "CommonJS",
     "noImplicitAny": true,
     "lib": ["es6", "dom", "es2021"],
-    "removeComments": true,
+    "removeComments": false,
     "skipLibCheck": true,
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
+
     "outDir": "./dist"
   },
   "include": ["src/**/*", "tests", ".eslintrc.json"],
